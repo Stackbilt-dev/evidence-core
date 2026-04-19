@@ -76,7 +76,34 @@ A JSON Schema for modeling an evidence asset library (case studies, customer quo
 import schema from '@stackbilt/evidence-core/schema' assert { type: 'json' };
 ```
 
-The schema is a reference contract; storage is left to the consumer (D1, Postgres, flat file, etc.). The companion `mergeEvidence(content, submitted)` helper injects library-retrieved evidence into a draft.
+The schema is a reference contract; storage is left to the consumer (D1, Postgres, flat file, etc.). The companion `mergeEvidence(content, evidence)` helper injects library-retrieved evidence into a draft.
+
+## Gap-fill with `mergeEvidence`
+
+`mergeEvidence(content, evidence)` is the deterministic "inject" step of a gap-fill loop. Validate a draft, look up library assets that address the gaps, merge them into the draft, then re-draft with an LLM and re-validate. The merge itself is a pure, synchronous transformation — no LLM call, no mutation of the input, and no null coercion (absent evidence fields leave the output fields absent).
+
+```ts
+import { validateEvidence, mergeEvidence } from '@stackbilt/evidence-core';
+
+let draft = {
+  text: 'Your draft...',
+  author: 'Jane Doe',
+  authorBio: 'Senior content strategist with 10 years...',
+};
+
+let result = await validateEvidence(draft);
+while (result.hasGaps) {
+  const assets = await queryEvidenceLibrary(result.gaps); // consumer-supplied
+  draft = mergeEvidence(draft, {
+    caseStudies: assets.caseStudies, // [{ title, summary, url?, date? }]
+    citations: assets.citations,     // [{ url, title?, publishedDate? }]
+    visuals: assets.visuals,         // [{ url, alt, caption? }]
+    metadata: { lastUpdated: '2026-04-19' },
+  });
+  draft.text = await llmRedraft(draft); // consumer-supplied
+  result = await validateEvidence(draft);
+}
+```
 
 ## Heuristic scope
 

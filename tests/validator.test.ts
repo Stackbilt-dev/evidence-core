@@ -107,16 +107,27 @@ describe('validateEvidence', () => {
 });
 
 describe('mergeEvidence', () => {
-  it('appends submitted evidence to existing arrays', () => {
+  const caseStudyA = { title: 'A', summary: 'First case study' };
+  const caseStudyB = { title: 'B', summary: 'Second case study', url: 'https://ex.com/b' };
+  const citationA = { url: 'https://a.example' };
+  const citationB = { url: 'https://b.example', title: 'B paper', publishedDate: '2025-01-15' };
+  const visualA = { url: 'https://img.example/a.png', alt: 'diagram A' };
+
+  it('appends evidence case studies to existing array', () => {
     const merged = mergeEvidence(
-      { caseStudies: [{ id: 'a' }], citations: [] },
-      { caseStudies: [{ id: 'b' }], citations: [{ ref: 'c' }] },
+      { caseStudies: [caseStudyA], citations: [] },
+      { caseStudies: [caseStudyB], citations: [citationA] },
     );
-    expect(merged.caseStudies).toEqual([{ id: 'a' }, { id: 'b' }]);
-    expect(merged.citations).toEqual([{ ref: 'c' }]);
+    expect(merged.caseStudies).toEqual([caseStudyA, caseStudyB]);
+    expect(merged.citations).toEqual([citationA]);
   });
 
-  it('merges metadata shallowly', () => {
+  it('appends visuals when provided', () => {
+    const merged = mergeEvidence({}, { visuals: [visualA] });
+    expect(merged.visuals).toEqual([visualA]);
+  });
+
+  it('merges metadata shallowly (evidence values win)', () => {
     const merged = mergeEvidence(
       { metadata: { author: 'A', factChecked: false } },
       { metadata: { factChecked: true, reviewer: 'B' } },
@@ -124,10 +135,46 @@ describe('mergeEvidence', () => {
     expect(merged.metadata).toEqual({ author: 'A', factChecked: true, reviewer: 'B' });
   });
 
-  it('leaves content untouched when no evidence submitted', () => {
-    const original = { text: 'body', caseStudies: [{ id: 'a' }] };
+  it('leaves content untouched when empty evidence is submitted', () => {
+    const original = { text: 'body', caseStudies: [caseStudyA] };
     const merged = mergeEvidence(original, {});
-    expect(merged.caseStudies).toEqual([{ id: 'a' }]);
-    expect(merged.text).toBe('body');
+    expect(merged).toEqual(original);
+  });
+
+  it('round-trip: merging empty evidence is a deep-equal no-op', () => {
+    const original = {
+      text: 'draft body',
+      author: 'Jane Doe',
+      metadata: { lastUpdated: '2026-04-19' },
+      caseStudies: [caseStudyA],
+      citations: [citationB],
+      visuals: [visualA],
+    };
+    const merged = mergeEvidence(original, {});
+    expect(merged).toEqual(original);
+  });
+
+  it('does not mutate the input content', () => {
+    const content = { text: 'body', caseStudies: [caseStudyA], metadata: { author: 'A' } };
+    const snapshot = JSON.parse(JSON.stringify(content));
+    mergeEvidence(content, {
+      caseStudies: [caseStudyB],
+      citations: [citationA],
+      metadata: { reviewer: 'R' },
+    });
+    expect(content).toEqual(snapshot);
+  });
+
+  it('absent evidence fields leave output fields absent (no null coercion)', () => {
+    const merged = mergeEvidence({ text: 'body' }, {});
+    expect('caseStudies' in merged).toBe(false);
+    expect('citations' in merged).toBe(false);
+    expect('visuals' in merged).toBe(false);
+    expect('metadata' in merged).toBe(false);
+  });
+
+  it('empty array evidence field still produces the field (explicit opt-in)', () => {
+    const merged = mergeEvidence({}, { caseStudies: [] });
+    expect(merged.caseStudies).toEqual([]);
   });
 });
