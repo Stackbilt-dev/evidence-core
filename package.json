@@ -1,0 +1,54 @@
+{
+  "name": "@stackbilt/evidence-core",
+  "version": "0.1.0",
+  "description": "E-E-A-T content-quality validator: Google policy-versioned gap detection for AI-generated content",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./schema": "./src/schemas/evidence-library.schema.json"
+  },
+  "files": [
+    "dist",
+    "src/schemas",
+    "README.md",
+    "LICENSE",
+    "NOTICE",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "eeat",
+    "seo",
+    "content-quality",
+    "google",
+    "content-validation",
+    "ai-content",
+    "trust",
+    "authoritativeness"
+  ],
+  "author": "Stackbilt LLC",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Stackbilt-dev/evidence-core.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Stackbilt-dev/evidence-core/issues"
+  },
+  "homepage": "https://github.com/Stackbilt-dev/evidence-core#readme",
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "vitest": "^1.1.0"
+  }
+}

@@ -1,0 +1,399 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Evidence Library Schema",
+  "description": "Schema for E-E-A-T evidence library assets including case studies, quotes, visuals, and proprietary data",
+  "type": "object",
+  "definitions": {
+    "evidenceAsset": {
+      "type": "object",
+      "required": ["id", "type", "title", "content", "domains", "qualityScore", "metadata"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the evidence asset",
+          "pattern": "^evidence_[a-zA-Z0-9_-]+$"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "case_study",
+            "customer_quote",
+            "expert_quote",
+            "original_visual",
+            "proprietary_data",
+            "first_hand_experience",
+            "technical_diagram",
+            "research_finding"
+          ],
+          "description": "Type of evidence asset"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 200,
+          "description": "Descriptive title for the evidence asset"
+        },
+        "content": {
+          "type": "object",
+          "description": "Main content of the evidence asset",
+          "oneOf": [
+            {
+              "properties": {
+                "text": { "type": "string", "minLength": 50 },
+                "format": { "enum": ["markdown", "plain", "html"] }
+              },
+              "required": ["text", "format"]
+            },
+            {
+              "properties": {
+                "url": { "type": "string", "format": "uri" },
+                "mimeType": { "type": "string" },
+                "altText": { "type": "string" }
+              },
+              "required": ["url", "mimeType"]
+            }
+          ]
+        },
+        "domains": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": [
+              "medical",
+              "legal",
+              "financial",
+              "technology",
+              "marketing",
+              "business",
+              "education",
+              "health_wellness",
+              "ecommerce",
+              "real_estate",
+              "automotive",
+              "general"
+            ]
+          },
+          "description": "Domain relevance for smart matching"
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Semantic tags for evidence matching"
+        },
+        "qualityScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Quality score (0-100) for evidence ranking"
+        },
+        "verificationStatus": {
+          "type": "string",
+          "enum": ["verified", "unverified", "pending", "disputed"],
+          "default": "unverified",
+          "description": "Verification status of the evidence"
+        },
+        "metadata": {
+          "type": "object",
+          "required": ["createdAt", "author"],
+          "properties": {
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 timestamp of creation"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "author": {
+              "type": "object",
+              "required": ["name"],
+              "properties": {
+                "name": { "type": "string" },
+                "credentials": { "type": "array", "items": { "type": "string" } },
+                "bio": { "type": "string" }
+              }
+            },
+            "source": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "url": { "type": "string", "format": "uri" },
+                "publicationDate": { "type": "string", "format": "date" }
+              }
+            },
+            "usageCount": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Number of times this evidence has been used"
+            },
+            "usageHistory": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "contentId": { "type": "string" },
+                  "contentTitle": { "type": "string" },
+                  "usedAt": { "type": "string", "format": "date-time" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "caseStudy": {
+      "allOf": [
+        { "$ref": "#/definitions/evidenceAsset" },
+        {
+          "properties": {
+            "type": { "const": "case_study" },
+            "caseStudyDetails": {
+              "type": "object",
+              "required": ["client", "challenge", "solution", "results"],
+              "properties": {
+                "client": {
+                  "type": "object",
+                  "properties": {
+                    "name": { "type": "string" },
+                    "industry": { "type": "string" },
+                    "size": { "type": "string" },
+                    "anonymized": { "type": "boolean", "default": false }
+                  }
+                },
+                "challenge": {
+                  "type": "string",
+                  "minLength": 50,
+                  "description": "Problem or challenge faced"
+                },
+                "solution": {
+                  "type": "string",
+                  "minLength": 100,
+                  "description": "Solution implemented"
+                },
+                "results": {
+                  "type": "object",
+                  "properties": {
+                    "metrics": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "metric": { "type": "string" },
+                          "before": { "type": "string" },
+                          "after": { "type": "string" },
+                          "improvement": { "type": "string" }
+                        }
+                      }
+                    },
+                    "testimonial": { "type": "string" }
+                  }
+                },
+                "duration": { "type": "string" },
+                "timeline": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "phase": { "type": "string" },
+                      "duration": { "type": "string" },
+                      "outcome": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "customerQuote": {
+      "allOf": [
+        { "$ref": "#/definitions/evidenceAsset" },
+        {
+          "properties": {
+            "type": { "const": "customer_quote" },
+            "quoteDetails": {
+              "type": "object",
+              "required": ["text", "attribution"],
+              "properties": {
+                "text": {
+                  "type": "string",
+                  "minLength": 20,
+                  "maxLength": 500,
+                  "description": "The actual quote text"
+                },
+                "attribution": {
+                  "type": "object",
+                  "required": ["name"],
+                  "properties": {
+                    "name": { "type": "string" },
+                    "title": { "type": "string" },
+                    "company": { "type": "string" },
+                    "photoUrl": { "type": "string", "format": "uri" },
+                    "consentDate": { "type": "string", "format": "date" }
+                  }
+                },
+                "context": {
+                  "type": "string",
+                  "description": "Context in which quote was given"
+                },
+                "sentiment": {
+                  "type": "string",
+                  "enum": ["positive", "neutral", "constructive"],
+                  "default": "positive"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "originalVisual": {
+      "allOf": [
+        { "$ref": "#/definitions/evidenceAsset" },
+        {
+          "properties": {
+            "type": { "const": "original_visual" },
+            "visualDetails": {
+              "type": "object",
+              "required": ["visualType", "fileUrl", "altText"],
+              "properties": {
+                "visualType": {
+                  "type": "string",
+                  "enum": [
+                    "screenshot",
+                    "photograph",
+                    "diagram",
+                    "chart",
+                    "infographic",
+                    "video",
+                    "animation"
+                  ]
+                },
+                "fileUrl": {
+                  "type": "string",
+                  "format": "uri",
+                  "description": "URL to the visual asset"
+                },
+                "thumbnailUrl": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "altText": {
+                  "type": "string",
+                  "minLength": 10,
+                  "description": "Descriptive alt text for accessibility"
+                },
+                "dimensions": {
+                  "type": "object",
+                  "properties": {
+                    "width": { "type": "integer" },
+                    "height": { "type": "integer" }
+                  }
+                },
+                "fileSize": { "type": "integer", "description": "File size in bytes" },
+                "format": { "type": "string" },
+                "capturedDate": { "type": "string", "format": "date" },
+                "copyright": {
+                  "type": "object",
+                  "properties": {
+                    "holder": { "type": "string" },
+                    "year": { "type": "integer" },
+                    "license": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "proprietaryData": {
+      "allOf": [
+        { "$ref": "#/definitions/evidenceAsset" },
+        {
+          "properties": {
+            "type": { "const": "proprietary_data" },
+            "dataDetails": {
+              "type": "object",
+              "required": ["dataType", "methodology"],
+              "properties": {
+                "dataType": {
+                  "type": "string",
+                  "enum": [
+                    "survey_results",
+                    "research_study",
+                    "industry_report",
+                    "benchmark_data",
+                    "performance_metrics"
+                  ]
+                },
+                "methodology": {
+                  "type": "string",
+                  "minLength": 100,
+                  "description": "Research methodology description"
+                },
+                "sampleSize": { "type": "integer" },
+                "dateRange": {
+                  "type": "object",
+                  "properties": {
+                    "start": { "type": "string", "format": "date" },
+                    "end": { "type": "string", "format": "date" }
+                  }
+                },
+                "confidenceLevel": { "type": "number" },
+                "marginOfError": { "type": "number" },
+                "keyFindings": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "finding": { "type": "string" },
+                      "dataPoint": { "type": "string" },
+                      "significance": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "properties": {
+    "libraryVersion": {
+      "type": "string",
+      "description": "Evidence library schema version"
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          { "$ref": "#/definitions/caseStudy" },
+          { "$ref": "#/definitions/customerQuote" },
+          { "$ref": "#/definitions/originalVisual" },
+          { "$ref": "#/definitions/proprietaryData" },
+          { "$ref": "#/definitions/evidenceAsset" }
+        ]
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "totalAssets": { "type": "integer" },
+        "lastUpdated": { "type": "string", "format": "date-time" },
+        "assetsByType": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" }
+        },
+        "assetsByDomain": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" }
+        }
+      }
+    }
+  }
+}
