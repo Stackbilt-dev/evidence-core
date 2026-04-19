@@ -7,7 +7,8 @@ All notable changes to `@stackbilt/evidence-core` will be documented in this fil
 ### Added
 - Initial extraction from `aegis-daemon` (`web/src/lib/evidence/`).
 - `validateEvidence(content, options)` — async validator emitting pillar-scoped gap reports with actionable suggestions.
-- `mergeEvidence(content, submitted)` — helper for injecting user-submitted evidence (case studies, citations, visuals) into a draft.
+- `mergeEvidence(content, evidence)` — pure, deterministic helper for injecting library-retrieved evidence (case studies, citations, visuals, metadata) into a draft. No LLM call, no input mutation, no null coercion for absent fields.
+- Typed asset shapes `EvidenceCaseStudy`, `EvidenceCitation`, `EvidenceVisual`, and the `MergeableEvidence` input type (supersedes the looser `SubmittedEvidence`, kept as a deprecated alias).
 - Three built-in policy presets tied to real Google algorithm updates:
   - `google_baseline_2023` — pre-update baseline.
   - `google_march_2024_core` — scaled content abuse + helpful content integration.

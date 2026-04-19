@@ -109,17 +109,38 @@ export interface ValidationOptions {
     policyVersion?: EvidencePolicyVersion | string;
     policy?: EvidencePolicy;
 }
-export interface MergeableContent extends ContentInput {
-    caseStudies?: unknown[];
-    citations?: unknown[];
-    visuals?: unknown[];
+export interface EvidenceCaseStudy {
+    title: string;
+    summary: string;
+    url?: string;
+    date?: string;
+    [key: string]: unknown;
 }
-export interface SubmittedEvidence {
-    caseStudies?: unknown[];
-    citations?: unknown[];
-    visuals?: unknown[];
+export interface EvidenceCitation {
+    url: string;
+    title?: string;
+    publishedDate?: string;
+    [key: string]: unknown;
+}
+export interface EvidenceVisual {
+    url: string;
+    alt: string;
+    caption?: string;
+    [key: string]: unknown;
+}
+export interface MergeableContent extends ContentInput {
+    caseStudies?: EvidenceCaseStudy[];
+    citations?: EvidenceCitation[];
+    visuals?: EvidenceVisual[];
+}
+export interface MergeableEvidence {
+    caseStudies?: EvidenceCaseStudy[];
+    citations?: EvidenceCitation[];
+    visuals?: EvidenceVisual[];
     metadata?: ContentMetadata;
 }
+/** @deprecated Use {@link MergeableEvidence}. Kept for 0.1.x compatibility. */
+export type SubmittedEvidence = MergeableEvidence;
 export declare const DEFAULT_EVIDENCE_POLICY_VERSION: EvidencePolicyVersion;
 export declare const EVIDENCE_POLICY_PRESETS: Record<EvidencePolicyVersion, EvidencePolicy>;
 /**
@@ -127,7 +148,17 @@ export declare const EVIDENCE_POLICY_PRESETS: Record<EvidencePolicyVersion, Evid
  */
 export declare function validateEvidence(content: ContentInput | string, options?: ValidationOptions): Promise<ValidationResult>;
 /**
- * Validate and merge user-submitted evidence into content.
+ * Merge library-retrieved evidence assets into a draft.
+ *
+ * Pure, deterministic transformation over {@link ContentInput}: case studies,
+ * citations, and visuals are appended to their corresponding arrays; metadata
+ * is shallow-merged into the existing metadata block. Does not mutate the
+ * input. Does not call an LLM. If an evidence field is absent, the
+ * corresponding output field is left exactly as it was (no empty array or
+ * null coercion).
+ *
+ * Intended as the deterministic "inject" step of the Evidence Engine gap-fill
+ * loop: validate → query library → mergeEvidence → LLM re-draft → re-validate.
  */
-export declare function mergeEvidence(content: MergeableContent, submittedEvidence: SubmittedEvidence): MergeableContent;
+export declare function mergeEvidence(content: MergeableContent, evidence: MergeableEvidence): MergeableContent;
 //# sourceMappingURL=evidence-validator.d.ts.map

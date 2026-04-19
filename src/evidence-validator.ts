@@ -148,18 +148,43 @@ export interface ValidationOptions {
   policy?: EvidencePolicy;
 }
 
-export interface MergeableContent extends ContentInput {
-  caseStudies?: unknown[];
-  citations?: unknown[];
-  visuals?: unknown[];
+export interface EvidenceCaseStudy {
+  title: string;
+  summary: string;
+  url?: string;
+  date?: string;
+  [key: string]: unknown;
 }
 
-export interface SubmittedEvidence {
-  caseStudies?: unknown[];
-  citations?: unknown[];
-  visuals?: unknown[];
+export interface EvidenceCitation {
+  url: string;
+  title?: string;
+  publishedDate?: string;
+  [key: string]: unknown;
+}
+
+export interface EvidenceVisual {
+  url: string;
+  alt: string;
+  caption?: string;
+  [key: string]: unknown;
+}
+
+export interface MergeableContent extends ContentInput {
+  caseStudies?: EvidenceCaseStudy[];
+  citations?: EvidenceCitation[];
+  visuals?: EvidenceVisual[];
+}
+
+export interface MergeableEvidence {
+  caseStudies?: EvidenceCaseStudy[];
+  citations?: EvidenceCitation[];
+  visuals?: EvidenceVisual[];
   metadata?: ContentMetadata;
 }
+
+/** @deprecated Use {@link MergeableEvidence}. Kept for 0.1.x compatibility. */
+export type SubmittedEvidence = MergeableEvidence;
 
 export const DEFAULT_EVIDENCE_POLICY_VERSION: EvidencePolicyVersion =
   'google_november_2024_reputation';
@@ -892,28 +917,38 @@ function generateSuggestions(gaps: EvidenceGap[]): Suggestion[] {
 }
 
 /**
- * Validate and merge user-submitted evidence into content.
+ * Merge library-retrieved evidence assets into a draft.
+ *
+ * Pure, deterministic transformation over {@link ContentInput}: case studies,
+ * citations, and visuals are appended to their corresponding arrays; metadata
+ * is shallow-merged into the existing metadata block. Does not mutate the
+ * input. Does not call an LLM. If an evidence field is absent, the
+ * corresponding output field is left exactly as it was (no empty array or
+ * null coercion).
+ *
+ * Intended as the deterministic "inject" step of the Evidence Engine gap-fill
+ * loop: validate → query library → mergeEvidence → LLM re-draft → re-validate.
  */
 export function mergeEvidence(
   content: MergeableContent,
-  submittedEvidence: SubmittedEvidence,
+  evidence: MergeableEvidence,
 ): MergeableContent {
   const merged: MergeableContent = { ...content };
 
-  if (submittedEvidence.caseStudies) {
-    merged.caseStudies = [...(content.caseStudies ?? []), ...submittedEvidence.caseStudies];
+  if (evidence.caseStudies !== undefined) {
+    merged.caseStudies = [...(content.caseStudies ?? []), ...evidence.caseStudies];
   }
 
-  if (submittedEvidence.citations) {
-    merged.citations = [...(content.citations ?? []), ...submittedEvidence.citations];
+  if (evidence.citations !== undefined) {
+    merged.citations = [...(content.citations ?? []), ...evidence.citations];
   }
 
-  if (submittedEvidence.visuals) {
-    merged.visuals = [...(content.visuals ?? []), ...submittedEvidence.visuals];
+  if (evidence.visuals !== undefined) {
+    merged.visuals = [...(content.visuals ?? []), ...evidence.visuals];
   }
 
-  if (submittedEvidence.metadata) {
-    merged.metadata = { ...(content.metadata ?? {}), ...submittedEvidence.metadata };
+  if (evidence.metadata !== undefined) {
+    merged.metadata = { ...(content.metadata ?? {}), ...evidence.metadata };
   }
 
   return merged;
