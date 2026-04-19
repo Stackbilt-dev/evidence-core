@@ -54,10 +54,10 @@ describe('validateEvidence', () => {
   });
 
   it('source attribution satisfied by the phrase "according to"', async () => {
-    const result = await validateEvidence({
-      text: 'According to industry reports, the number increased by 42%.',
-      policyVersion: 'google_baseline_2023',
-    } as any);
+    const result = await validateEvidence(
+      { text: 'According to industry reports, the number increased by 42%.' },
+      { policyVersion: 'google_baseline_2023' },
+    );
     const attrGap = result.gaps.find((gap) => gap.requirement === 'source_attribution');
     expect(attrGap).toBeUndefined();
   });
