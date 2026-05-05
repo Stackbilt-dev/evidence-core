@@ -10,7 +10,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./schema": "./src/schemas/evidence-library.schema.json"
+    "./schema": "./src/schemas/evidence-library.schema.json",
+    "./audit": {
+      "types": "./dist/audit/index.d.ts",
+      "import": "./dist/audit/index.js"
+    }
   },
   "files": [
     "dist",
