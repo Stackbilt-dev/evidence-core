@@ -105,6 +105,67 @@ while (result.hasGaps) {
 }
 ```
 
+## Audit integration
+
+The `./audit` export provides audit trail hooks for validation and evidence-merge events. Records are shaped to be compatible with `@stackbilt/audit-chain`'s `writeRecord()` — no production dependency, but integration point is well-defined.
+
+### Exported types
+
+- `EvidenceAuditEvent` — union of 8 event types: `validation.started`, `validation.completed`, `gaps.detected`, `assets.merged`, `redraft.completed`, `approval.granted`, `publish.allowed`, `publish.blocked`
+- `EvidenceAuditRecord` — audit record shape (contentId, namespace, actor, event, timestamp, chainHead)
+- `ToAuditPayloadOptions` — config for payload generation
+
+### Transform functions
+
+```ts
+toAuditPayload(result: ValidationResult, options: ToAuditPayloadOptions): EvidenceAuditRecord
+```
+Converts a `validateEvidence()` result into an audit record. Records the event type based on validation outcome (gaps detected, validation completed, etc.).
+
+```ts
+toAssetsAuditPayload(evidence: MergeableEvidence, options: ToAuditPayloadOptions): EvidenceAuditRecord
+```
+Records the assets-merge event after calling `mergeEvidence()`.
+
+### Usage example
+
+```ts
+import { validateEvidence, mergeEvidence } from '@stackbilt/evidence-core';
+import { toAuditPayload, toAssetsAuditPayload } from '@stackbilt/evidence-core/audit';
+// audit-chain is optional — wire it at the app layer, not imported here
+import { writeRecord, getChainHead } from '@stackbilt/audit-chain';
+
+const contentId = 'article:uuid-12345';
+const content = { text: '...', author: 'Jane Doe' };
+
+// Validate and record the event
+const result = await validateEvidence(content, { policyVersion: 'google_march_2024_core' });
+const record = toAuditPayload(result, {
+  contentId,
+  contentHash: sha256(content.text), // optional
+  actor: 'user:operator-id',         // optional, defaults to 'system:evidence-engine'
+});
+
+// Wire with audit-chain if available
+const chainHead = await getChainHead(bindings, record.namespace);
+await writeRecord(bindings, { ...record, chainHead });
+
+// After merging evidence assets
+const evidence = { caseStudies: [...], citations: [...] };
+const mergedContent = mergeEvidence(content, evidence);
+const assetsRecord = toAssetsAuditPayload(evidence, { contentId });
+const updatedHead = await getChainHead(bindings, assetsRecord.namespace);
+await writeRecord(bindings, { ...assetsRecord, chainHead: updatedHead });
+```
+
+### Namespace conventions
+
+- Default namespace: `content:{contentId}` (e.g., `content:article-123`)
+- Multi-tenant: `tenant:{tenantId}:content:{contentId}` (e.g., `tenant:t-456:content:article-123`)
+- Override via `ToAuditPayloadOptions.namespace`
+
+`@stackbilt/audit-chain` is a peer dependency — evidence-core has no production import on it. Consumers wire audit records into a chain at the application layer.
+
 ## Heuristic scope
 
 Pillar counters use regex patterns (case-study markers, citation links, first-hand-experience phrases, data points, etc.) — intentional design trade-off: deterministic, fast, no LLM dependency, runs in any environment including Cloudflare Workers. Consumers who want LLM-grade semantic counting should layer that on top.
