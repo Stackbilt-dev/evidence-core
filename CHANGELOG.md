@@ -15,6 +15,8 @@ All notable changes to `@stackbilt/evidence-core` will be documented in this fil
   - `google_november_2024_reputation` — adds editorial-process requirements for reputation-sensitive content (default).
 - Four E-E-A-T pillars × thirteen requirement types covering Experience, Expertise, Authoritativeness, and Trustworthiness.
 - Evidence library JSON Schema (`@stackbilt/evidence-core/schema`) for validating consumer asset stores.
+- `./audit` subpath export — `toAuditPayload()` / `toAssetsAuditPayload()` transform a `validateEvidence()` / `mergeEvidence()` result into a `{namespace, event_type, actor, payload}` record shape-compatible with `@stackbilt/audit-chain`'s `writeRecord()` options. `EvidenceAuditEvent` — union of 8 event types spanning the validate → merge → redraft → approve → publish lifecycle. No dependency on audit-chain; wire it at the application layer.
 
 ### Notes
-- Pre-1.0; API may still change. Not yet published to npm — consume via git dependency or the published tarball in the GitHub release once tagged.
+- Pre-1.0; API may still change.
+- Published to npm as `0.1.0`; `main` has moved ahead of that tag (mergeEvidence type-tightening, the `./audit` subpath) — consumers tracking latest should use `github:Stackbilt-dev/evidence-core#main` until the next npm publish.

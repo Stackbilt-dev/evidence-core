@@ -112,7 +112,7 @@ The `./audit` export provides audit trail hooks for validation and evidence-merg
 ### Exported types
 
 - `EvidenceAuditEvent` — union of 8 event types: `validation.started`, `validation.completed`, `gaps.detected`, `assets.merged`, `redraft.completed`, `approval.granted`, `publish.allowed`, `publish.blocked`
-- `EvidenceAuditRecord` — audit record shape (contentId, namespace, actor, event, timestamp, chainHead)
+- `EvidenceAuditRecord` — audit record shape (`namespace`, `event_type`, `actor`, `payload`), matching `@stackbilt/audit-chain`'s `writeRecord()` options minus `chainHead` (caller supplies that when writing — see usage example below). `contentId` and other event-specific fields live inside `payload`, not top-level.
 - `ToAuditPayloadOptions` — config for payload generation
 
 ### Transform functions
@@ -164,7 +164,7 @@ await writeRecord(bindings, { ...assetsRecord, chainHead: updatedHead });
 - Multi-tenant: `tenant:{tenantId}:content:{contentId}` (e.g., `tenant:t-456:content:article-123`)
 - Override via `ToAuditPayloadOptions.namespace`
 
-`@stackbilt/audit-chain` is a peer dependency — evidence-core has no production import on it. Consumers wire audit records into a chain at the application layer.
+`@stackbilt/audit-chain` is not declared as a dependency (peer or otherwise) — evidence-core ships with zero runtime dependencies. Consumers wire audit records into a chain at the application layer.
 
 ## Heuristic scope
 
