@@ -30,7 +30,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "prepare": "node -e \"require('fs').existsSync('dist/index.js') || require('child_process').execSync('tsc', { stdio: 'inherit' })\"",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "pnpm run build"
   },
   "keywords": [
     "eeat",
